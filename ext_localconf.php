@@ -1,5 +1,5 @@
 <?php
-+defined('TYPO3_MODE') or die();
+defined('TYPO3_MODE') or die();
 
 // Add Plugin to Static Template #43
 \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPItoST43(
