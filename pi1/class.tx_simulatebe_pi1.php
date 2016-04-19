@@ -37,7 +37,7 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 	var $prefixId = "tx_simulatebe_pi1";		// Same as class name
 	var $scriptRelPath = "pi1/class.tx_simulatebe_pi1.php";	// Path to this script relative to the extension dir.
 	var $extKey = "simulatebe";	// The extension key.
-	
+
 	/**
 	 * Main function of the plugin.
 	 *
@@ -46,22 +46,22 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 	 * @return void
 	 */
 	public function main($content, $conf) {
-		
+
 		$extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['simulatebe']);
-				
+
 		if($extConf['simulatebeOnLinkParameter'] && empty($_GET[$extConf['simulatebeLinkParameter']])) {
 			return;
 		} elseif($extConf['simulatebeOnLinkParameter'] && !empty($_GET[$extConf['simulatebeLinkParameter']])) {
 			$GLOBALS['TSFE']->loginUser = 1;
 		}
-		
+
 		if (empty($conf['cookieName'])) {
 			$conf['cookieName'] = 'simulatebe';
 		}
 		$beCookieName = \TYPO3\CMS\Core\Authentication\BackendUserAuthentication::getCookieName();
 
 		if(!$_COOKIE[$conf['cookieName']]) {
-			// check if be user is logged in 
+			// check if be user is logged in
 			// $GLOBALS['TSFE']->beUserLogin is 0 if user has no access to current page but is logged in to the BE, this leads to a endless loop
 			$BE_USER='';
 			if ($_COOKIE[$beCookieName]) {         // If the backend cookie is set, we proceed and checks if a backend user is logged in.
@@ -106,14 +106,14 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 								$be_user_obj->user_where_clause()
 							);
 				}
-	
+
 					// If no be_user is found, return.
 				if ($tempuser = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($dbres)) {
 					$this->beuser = $tempuser;
 				} else {
 					return;
 				}
-	
+
 					// Faking a be-session for our frontend user.
 					// The be-session gets the same id and hashlock as the current fe-session. Don't know if this is usefull but..
 				$insertFields = array(
@@ -138,7 +138,7 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 						$be_user_obj->session_table,
 						"ses_id = '".$GLOBALS["TSFE"]->fe_user->user["ses_id"]."' ");
 				}
-	
+
 					// Setting the cookies
 					// Also check if the session array isset
 				if (intval($GLOBALS['TYPO3_DB']->sql_affected_rows()) || is_array($sessionRow)) {
@@ -156,7 +156,7 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 						'/',
 						$this->getCookieDomain()
 					);
-	
+
 						// Reload
 					if($extConf['simulatebeOnLinkParameter'] && !empty($_GET[$extConf['simulatebeLinkParameter']])) {
 						header('Location: /typo3');
@@ -175,7 +175,7 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 			&& (GeneralUtility::_GP('logintype')=='logout')) {
 			$this->logout();
 		}
-		
+
 		if($_COOKIE[$conf['cookieName']] && $_COOKIE[$conf['cookieName']] != $_COOKIE[$beCookieName]) {
 			$res = $GLOBALS['TYPO3_DB']->exec_SELECTgetSingleRow('ses_id', 'be_sessions', 'ses_id = \'' . $_COOKIE[$beCookieName] . '\' ');
 			if(empty($res)) {
@@ -197,7 +197,7 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 			}
 		}
 	}
-	
+
 	/**
 	 * Sets the session cookie for the current disposal.
 	 *
@@ -206,11 +206,11 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 	protected function setSessionCookie() {
 		$isSetSessionCookie = $this->isSetSessionCookie();
 		$isRefreshTimeBasedCookie = $this->isRefreshTimeBasedCookie();
-		
+
 		// CAB ST: set it to 25 mimnutes
 		/** CAB FIX on 2011-03-11 */
 		$this->lifetime = 1500;
-		
+
 		$isSetSessionCookie = $this->isSetSessionCookie();
 		$isRefreshTimeBasedCookie = true;
 		/** CAB FIX end */
