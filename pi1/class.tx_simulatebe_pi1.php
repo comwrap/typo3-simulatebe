@@ -142,20 +142,8 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 					// Setting the cookies
 					// Also check if the session array isset
 				if (intval($GLOBALS['TYPO3_DB']->sql_affected_rows()) || is_array($sessionRow)) {
-					setcookie(
-						$be_user_obj->name,
-						$GLOBALS['TSFE']->fe_user->user['ses_id'],
-						0,
-						'/',
-						$this->getCookieDomain()
-					);
-					setcookie(
-						$conf['cookieName'],
-						$GLOBALS['TSFE']->fe_user->user['ses_id'],
-						0,
-						'/',
-						$this->getCookieDomain()
-					);
+					$this->setCookie($be_user_obj->name, $GLOBALS['TSFE']->fe_user->user['ses_id'], 0);
+					$this->setCookie($conf['cookieName'], $GLOBALS['TSFE']->fe_user->user['ses_id'], 0);
 
 						// Reload
 					if($extConf['simulatebeOnLinkParameter'] && !empty($_GET[$extConf['simulatebeLinkParameter']])) {
@@ -216,36 +204,11 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 		/** CAB FIX end */
 
 		if ($isSetSessionCookie || $isRefreshTimeBasedCookie) {
-			$settings = $GLOBALS['TYPO3_CONF_VARS']['SYS'];
-
 				// Get the domain to be used for the cookie (if any):
 			$cookieDomain = $this->getCookieDomain();
-				// If no cookie domain is set, use the base path:
-			$cookiePath = ($cookieDomain ? '/' : GeneralUtility::getIndpEnv('TYPO3_SITE_PATH'));
-				// If the cookie lifetime is set, use it:
 			$cookieExpire = ($isRefreshTimeBasedCookie ? $GLOBALS['EXEC_TIME'] + $this->lifetime : 0);
-				// Use the secure option when the current request is served by a secure connection:
-			$cookieSecure = (bool) $settings['cookieSecure'] && GeneralUtility::getIndpEnv('TYPO3_SSL');
-				// Deliver cookies only via HTTP and prevent possible XSS by JavaScript:
-			$cookieHttpOnly = (bool) $settings['cookieHttpOnly'];
 
-				// Do not set cookie if cookieSecure is set to "1" (force HTTPS) and no secure channel is used:
-			if ((int) $settings['cookieSecure'] !== 1 || GeneralUtility::getIndpEnv('TYPO3_SSL')) {
-				setcookie(
-					$this->name,
-					$this->id,
-					$cookieExpire,
-					$cookiePath,
-					$cookieDomain,
-					$cookieSecure,
-					$cookieHttpOnly
-				);
-			} else {
-				throw new \TYPO3\CMS\Core\Exception(
-					'Cookie was not set since HTTPS was forced in $TYPO3_CONF_VARS[SYS][cookieSecure].',
-					1254325546
-				);
-			}
+			$this->setCookie($this->name, $this->id, $cookieExpire);
 
 			if ($this->writeDevLog) {
 				$devLogMessage = ($isRefreshTimeBasedCookie ? 'Updated Cookie: ' : 'Set Cookie: ') . $this->id;
@@ -272,20 +235,40 @@ class tx_simulatebe_pi1 extends AbstractUserAuthentication {
 		if (empty($conf['cookieName'])) {
 			$conf['cookieName'] = 'simulatebe';
 		}
-		setcookie(
-			$be_user_obj->name,
-			'',
-			0,
-			'/',
-			$this->getCookieDomain()
-		);
-		setcookie(
-			$conf['cookieName'],
-			'',
-			0,
-			'/',
-			$this->getCookieDomain()
-		);
+
+		$this->setCookie($be_user_obj->name, '', 0);
+		$this->setCookie($conf['cookieName'], '', 0);
+	}
+
+	/**
+	 * Sends a cookie to the client.
+	 *
+	 * This method will respect the TYPO3 configuration for secure cookies.
+	 *
+	 * An exception is thrown if the cookie needs to be send as a "secure" cookie
+	 * but the connection was not made using HTTPS.
+	 *
+	 * @param string $name
+	 * @param string $value
+	 * @param int $expire
+	 *
+	 * @throws \TYPO3\CMS\Core\Exception
+	 */
+	protected function setCookie($name, $value, $expire = 0)
+	{
+		$domain = $this->getCookieDomain();
+		$path = ($domain ? '/' : GeneralUtility::getIndpEnv('TYPO3_SITE_PATH'));
+		$secure = (bool)$GLOBALS['TYPO3_CONF_VARS']['SYS']['cookieSecure'] && GeneralUtility::getIndpEnv('TYPO3_SSL');
+		$httponly = (bool)$GLOBALS['TYPO3_CONF_VARS']['SYS']['cookieHttpOnly'];
+
+		if ($GLOBALS['TYPO3_CONF_VARS']['SYS']['cookieSecure'] && !GeneralUtility::getIndpEnv('TYPO3_SSL')) {
+			throw new \TYPO3\CMS\Core\Exception(
+				'Cookie was not set since HTTPS was forced in $TYPO3_CONF_VARS[SYS][cookieSecure].',
+				1254325546
+			);
+		}
+
+		setcookie($name, $value, $expire, $path, $domain, $secure, $httponly);
 	}
 }
 
